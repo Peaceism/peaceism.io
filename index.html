@@ -304,7 +304,7 @@ flexibility(document.documentElement);
 				<div id="test-popup-linke635571" class="mfp-hide ekit_self_video_wrap">
 					<video class="video_class"
 											>
-						<source type="video/mp4" src="wp-content/uploads/2025/07/PCSM-video.mp4" />
+						<!-- missing media: PCSM-video.mp4 -->
 					</video>
 				</div>
 					</div>
@@ -372,7 +372,7 @@ flexibility(document.documentElement);
         <div class="elementskit-infobox text-center text-center icon-top-align elementor-animation-  gradient-active  hover_from_bottom">
                             <div class="elementskit-box-header">
                 <div class="elementskit-info-box-icon ">
-                    <img decoding="async" width="433" height="289" src="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-49-Peaceism-PCSM-–-peaceism_.png" class="attachment- size-" alt="" srcset="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-49-Peaceism-PCSM-–-peaceism_.png 433w, /wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-49-Peaceism-PCSM-–-peaceism_-300x200.png 300w" sizes="(max-width: 433px) 100vw, 433px" />                </div>
+                    <img decoding="async" width="433" height="289" src="wp-content/uploads/2025/04/businesspeople-climbing-up-the-stairs.jpg" class="attachment- size-" alt="" srcset="wp-content/uploads/2025/04/businesspeople-climbing-up-the-stairs.jpg 433w, wp-content/uploads/2025/04/businesspeople-climbing-up-the-stairs.jpg 300w" sizes="(max-width: 433px) 100vw, 433px" />                </div>
           </div>
                 <div class="box-body">
                             <h3 class="elementskit-info-box-title">
@@ -458,7 +458,7 @@ flexibility(document.documentElement);
         <div class="elementskit-infobox text-center text-center icon-top-align elementor-animation-  gradient-active  hover_from_bottom">
                             <div class="elementskit-box-header">
                 <div class="elementskit-info-box-icon ">
-                    <img loading="lazy" decoding="async" width="433" height="289" src="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-21-48-Peaceism-PCSM-–-peaceism_.png" class="attachment- size-" alt="" srcset="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-21-48-Peaceism-PCSM-–-peaceism_.png 433w, /wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-21-48-Peaceism-PCSM-–-peaceism_-300x200.png 300w" sizes="(max-width: 433px) 100vw, 433px" />                </div>
+                    <img loading="lazy" decoding="async" width="433" height="289" src="wp-content/uploads/2025/04/Bitcoin-Analysis2.png" class="attachment- size-" alt="" srcset="wp-content/uploads/2025/04/Bitcoin-Analysis2.png 433w, wp-content/uploads/2025/04/Bitcoin-Analysis2-300x258.png 300w" sizes="(max-width: 433px) 100vw, 433px" />                </div>
           </div>
                 <div class="box-body">
                             <h3 class="elementskit-info-box-title">
@@ -489,7 +489,7 @@ flexibility(document.documentElement);
         <div class="elementskit-infobox text-center text-center icon-top-align elementor-animation-  gradient-active  hover_from_bottom">
                             <div class="elementskit-box-header">
                 <div class="elementskit-info-box-icon ">
-                    <img loading="lazy" decoding="async" width="435" height="289" src="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-05-Peaceism-PCSM-–-peaceism_.png" class="attachment- size-" alt="" srcset="/wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-05-Peaceism-PCSM-–-peaceism_.png 435w, /wp-content/uploads/2025/04/Screenshot-2025-04-13-at-07-22-05-Peaceism-PCSM-–-peaceism_-300x199.png 300w" sizes="(max-width: 435px) 100vw, 435px" />                </div>
+                    <img loading="lazy" decoding="async" width="435" height="289" src="wp-content/uploads/2025/04/people-2944065_1280.jpg" class="attachment- size-" alt="" srcset="wp-content/uploads/2025/04/people-2944065_1280.jpg 435w, wp-content/uploads/2025/04/people-2944065_1280.jpg 300w" sizes="(max-width: 435px) 100vw, 435px" />                </div>
           </div>
                 <div class="box-body">
                             <h3 class="elementskit-info-box-title">
@@ -1381,7 +1381,7 @@ flexibility(document.documentElement);
 				<div id="test-popup-linka5dae99" class="mfp-hide ekit_self_video_wrap">
 					<video class="video_class"
 											>
-						<source type="video/mp4" src="wp-content/uploads/2025/08/530380498_24602349669359904_4445768835037600313_n.mp4" />
+						<!-- missing media: 530380498_24602349669359904_4445768835037600313_n.mp4 -->
 					</video>
 				</div>
 					</div>
@@ -2476,6 +2476,14 @@ wp.apiFetch.nonceMiddleware = wp.apiFetch.createNonceMiddleware( "8ce5b7c920" );
 wp.apiFetch.use( wp.apiFetch.nonceMiddleware );
 wp.apiFetch.use( wp.apiFetch.mediaUploadMiddleware );
 wp.apiFetch.nonceEndpoint = "/wp-admin/admin-ajax.php?action=rest-nonce";
+// Static GitHub Pages host: short-circuit WordPress REST calls that will 404.
+wp.apiFetch.use( function( options, next ) {
+	var path = options.path || options.url || '';
+	if ( typeof path === 'string' && ( path.indexOf( '/wp-json/' ) !== -1 || path.indexOf( 'wp-json/' ) === 0 ) ) {
+		return Promise.resolve( {} );
+	}
+	return next( options );
+} );
 </script>
 <script src="wp-includes/js/dist/vendor/moment.min.js" id="moment-js"></script>
 <script id="moment-js-after">
@@ -2494,11 +2502,7 @@ wp.date.setSettings( {"l10n":{"locale":"en_US","months":["January","February","M
 <script src="wp-includes/js/dist/preferences.min.js" id="wp-preferences-js"></script>
 <script id="wp-preferences-js-after">
 ( function() {
-				var serverData = false;
-				var userId = "0";
-				var persistenceLayer = wp.preferencesPersistence.__unstableCreatePersistenceLayer( serverData, userId );
-				var preferencesStore = wp.preferences.store;
-				wp.data.dispatch( preferencesStore ).setPersistenceLayer( persistenceLayer );
+				// Skip remote preference sync on static hosting (no WP REST API).
 			} ) ();
 </script>
 <script src="wp-includes/js/dist/style-engine.min.js" id="wp-style-engine-js"></script>

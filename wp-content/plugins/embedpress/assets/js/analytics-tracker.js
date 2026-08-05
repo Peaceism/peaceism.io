@@ -61,11 +61,11 @@
         impressionCooldown: 5000, // Throttle repeated impressions
         clickCooldown: 2000, // Throttle repeated clicks
         debug: false,
-        restUrl: embedpress_analytics?.rest_url || '/wp-json/embedpress/v1/analytics/',
+        restUrl: (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.rest_url) || '/wp-json/embedpress/v1/analytics/',
         userId: getOrCreateUserId(),
         sessionId: getOrCreateSessionId(),
-        pageUrl: embedpress_analytics?.page_url || window.location.href,
-        postId: embedpress_analytics?.post_id || 0,
+        pageUrl: (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.page_url) || window.location.href,
+        postId: (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.post_id) || 0,
         ipLocationData: null
     };
 
@@ -376,14 +376,14 @@
             page_url: data.page_url || config.pageUrl,
             post_id: data.post_id || config.postId,
             // Include original referrer if available
-            original_referrer: embedpress_analytics?.original_referrer || ''
+            original_referrer: (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.original_referrer) || ''
         };
 
         fetch(config.restUrl + 'track', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-WP-Nonce': embedpress_analytics?.nonce || ''
+                'X-WP-Nonce': (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.nonce) || ''
             },
             body: JSON.stringify(trackingData),
             credentials: 'same-origin'
@@ -430,7 +430,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-WP-Nonce': embedpress_analytics?.nonce || ''
+                    'X-WP-Nonce': (typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.nonce) || ''
                 },
                 body: JSON.stringify(info),
                 credentials: 'same-origin'
@@ -443,8 +443,8 @@
         if (window.embedpressAnalyticsData?.trackingEnabled !== undefined) {
             return Boolean(window.embedpressAnalyticsData.trackingEnabled);
         }
-        // Fallback to original localized value
-        return Boolean(embedpress_analytics?.tracking_enabled);
+        // Fallback to original localized value (static export has no WP localization).
+        return Boolean(typeof window.embedpress_analytics !== 'undefined' && window.embedpress_analytics?.tracking_enabled);
     }
 
     function init() {
