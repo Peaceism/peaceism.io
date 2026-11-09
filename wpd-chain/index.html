@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
 	<meta charset="UTF-8">
-		<title>WPD CHAIN &#8211; peaceism</title>
+		<title>WPD Chain &#8211; wpd-mainnet-1</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -284,11 +284,11 @@ flexibility(document.documentElement);
 			<div class="elementor-widget-wrap elementor-element-populated">
 						<div class="elementor-element elementor-element-6d4d371 elementor-widget__width-initial elementor-widget elementor-widget-heading" data-id="6d4d371" data-element_type="widget" data-widget_type="heading.default">
 				<div class="elementor-widget-container">
-					<h2 class="elementor-heading-title elementor-size-default">WPD POS Chain Explorer</h2>				</div>
+					<h2 class="elementor-heading-title elementor-size-default">WPD Chain explorer — wpd-mainnet-1</h2>				</div>
 				</div>
 				<div class="elementor-element elementor-element-c0c9ce3 elementor-widget elementor-widget-heading" data-id="c0c9ce3" data-element_type="widget" data-widget_type="heading.default">
 				<div class="elementor-widget-container">
-					<h6 class="elementor-heading-title elementor-size-default"><a href="/world-peace-development-wpd-a-next-generation-blockchain-for-a-secure-stable-and-decentralized-future/" target="_blank">“Not only will you have the option to deploy and analyze tokens on WPD Scan, but you’ll also get access to explore all existing chains—everything you need in one place.”</a></h6>				</div>
+					<h6 class="elementor-heading-title elementor-size-default">Chain-id wpd-mainnet-1. Prefix wpd. Coin type 118. Denom pcsm, symbol PCSM, exponent 8, fee denom pcsm. RPC https://rpc.peaceism.io. REST https://api.peaceism.io. Block explorer https://explorer.peaceism.io.</h6>				</div>
 				</div>
 					</div>
 		</div>
@@ -301,7 +301,100 @@ flexibility(document.documentElement);
 			<div class="elementor-widget-wrap elementor-element-populated">
 						<div class="elementor-element elementor-element-debf552 elementor-widget elementor-widget-html" data-id="debf552" data-element_type="widget" data-widget_type="html.default">
 				<div class="elementor-widget-container">
-					<iframe name="myiFrame" width="600px" height="1650px" src="https://www.socketscan.io/" scrolling="no" marginwidth="0" marginheight="0" style="border:0px none #ffffff;"></iframe>				</div>
+					<div id="wpd-l1-verify"><p>Reading https://rpc.peaceism.io and https://api.peaceism.io …</p></div>
+<script>
+(function () {
+  var RPC = "https://rpc.peaceism.io";
+  var API = "https://api.peaceism.io";
+  var root = document.getElementById("wpd-l1-verify");
+  function fail(err) {
+    root.innerHTML = "<p><strong>Chain read failed.</strong> " + esc(err && err.message ? err.message : err) + "</p><p>No height, validator, or supply was filled in. Open <a href=\"https://explorer.peaceism.io/\">explorer.peaceism.io</a>.</p>";
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c];
+    });
+  }
+  function get(url) {
+    return fetch(url, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(url + " HTTP " + r.status);
+      return r.json();
+    });
+  }
+  function sha256(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return crypto.subtle.digest("SHA-256", bytes).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ("0" + b.toString(16)).slice(-2);
+      }).join("").toUpperCase();
+    });
+  }
+  Promise.all([
+    get(RPC + "/status"),
+    get(RPC + "/commit"),
+    get(RPC + "/block"),
+    get(API + "/cosmos/bank/v1beta1/supply/by_denom?denom=pcsm"),
+    get(API + "/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED"),
+    get(API + "/cosmos/gov/v1/proposals?pagination.limit=20")
+  ]).then(function (rows) {
+    var status = rows[0].result || {};
+    var info = status.node_info || {};
+    var sync = status.sync_info || {};
+    var commit = (((rows[1].result || {}).signed_header || {}).commit || {});
+    var sigs = commit.signatures || [];
+    var signed = sigs.filter(function (s) { return s.signature && s.block_id_flag === 2; }).length;
+    var block = rows[2].result || {};
+    var txs = (((block.block || {}).data || {}).txs) || [];
+    var supply = (rows[3].amount || {}).amount || "";
+    var vals = rows[4].validators || [];
+    var total = vals.reduce(function (sum, v) { return sum + BigInt(v.tokens || "0"); }, 0n);
+    vals.sort(function (a, b) { return BigInt(b.tokens || "0") > BigInt(a.tokens || "0") ? 1 : -1; });
+    var proposals = rows[5].proposals || [];
+    var html = "";
+    html += "<p>Live read of chain-id <code>" + esc(info.network || "") + "</code>. Node <code>" + esc(info.moniker || "") + "</code>.</p>";
+    if (info.network && info.network !== "wpd-mainnet-1") {
+      html += "<p><strong>Chain-id mismatch.</strong> Expected wpd-mainnet-1.</p>";
+    }
+    html += "<ul>";
+    html += "<li>Height " + esc(sync.latest_block_height || "") + "</li>";
+    html += "<li>Block time " + esc(sync.latest_block_time || "") + "</li>";
+    html += "<li>catching_up " + esc(String(sync.catching_up)) + "</li>";
+    html += "<li>Latest block hash " + esc((block.block_id || {}).hash || "") + "</li>";
+    html += "<li>Commit signatures " + signed + " of " + sigs.length + "</li>";
+    html += "<li>pcsm supply raw " + esc(supply) + "</li>";
+    html += "</ul>";
+    html += "<h3>Bonded validators</h3><table><thead><tr><th>Moniker</th><th>Operator</th><th>Tokens</th><th>Share</th></tr></thead><tbody>";
+    vals.forEach(function (v) {
+      var tokens = BigInt(v.tokens || "0");
+      var share = total === 0n ? "" : (Number((tokens * 10000n) / total) / 100).toFixed(2) + "%";
+      var third = total > 0n && tokens * 3n > total ? " above 1/3" : "";
+      html += "<tr><td>" + esc((v.description || {}).moniker || "") + "</td><td><code>" + esc(v.operator_address || "") + "</code></td><td>" + esc(v.tokens || "") + "</td><td>" + esc(share + third) + "</td></tr>";
+    });
+    html += "</tbody></table>";
+    html += "<h3>Transactions in the latest block</h3>";
+    if (!txs.length) html += "<p>None in the latest block.</p>";
+    else html += "<ul id=\"wpd-l1-txs\"></ul>";
+    html += "<h3>Governance</h3><ul>";
+    if (!proposals.length) html += "<li>No proposals in this response.</li>";
+    proposals.forEach(function (p) {
+      html += "<li>" + esc(p.id) + " " + esc(String(p.status || "").replace("PROPOSAL_STATUS_", "")) + " " + esc(p.title || "") + " voting end " + esc(p.voting_end_time || "") + "</li>";
+    });
+    html += "</ul>";
+    html += "<p>Block history: <a href=\"https://explorer.peaceism.io/\">explorer.peaceism.io</a>. This page does not embed another chain's explorer.</p>";
+    root.innerHTML = html;
+    if (txs.length && window.crypto && crypto.subtle) {
+      var list = document.getElementById("wpd-l1-txs");
+      Promise.all(txs.slice(0, 10).map(sha256)).then(function (hashes) {
+        list.innerHTML = hashes.map(function (h) { return "<li><code>" + esc(h) + "</code></li>"; }).join("");
+      }).catch(function () {
+        list.innerHTML = "<li>Transaction hash could not be computed in this browser.</li>";
+      });
+    }
+  }).catch(fail);
+})();
+</script>				</div>
 				</div>
 					</div>
 		</div>
@@ -324,7 +417,7 @@ flexibility(document.documentElement);
 				</div>
 				<div class="elementor-element elementor-element-6900f01 elementor-widget elementor-widget-heading" data-id="6900f01" data-element_type="widget" data-widget_type="heading.default">
 				<div class="elementor-widget-container">
-					<h6 class="elementor-heading-title elementor-size-default"><a href="/world-peace-development-wpd-a-next-generation-blockchain-for-a-secure-stable-and-decentralized-future/" target="_blank">Sponsored:  PCSMCoins: 60% Bonus, Highest Odds. No KYC. Web3.  <u><b>Join Now</b></u></a></h6>				</div>
+					<h6 class="elementor-heading-title elementor-size-default">Technical record only. Supply, validators, and block height in the panel above are the endpoint responses.</h6>				</div>
 				</div>
 					</div>
 		</div>
