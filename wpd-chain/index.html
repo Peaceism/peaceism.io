@@ -338,18 +338,24 @@ flexibility(document.documentElement);
       }).join("").toUpperCase();
     });
   }
-  Promise.all([
-    get(RPC + "/status"),
-    get(RPC + "/commit"),
-    get(RPC + "/block"),
-    get(API + "/cosmos/bank/v1beta1/supply/by_denom?denom=pcsm"),
-    get(API + "/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED"),
-    get(API + "/cosmos/gov/v1/proposals?pagination.limit=20")
-  ]).then(function (rows) {
+  get(RPC + "/status").then(function (statusRow) {
+    var latest = Number(((statusRow.result || {}).sync_info || {}).latest_block_height);
+    if (!Number.isInteger(latest) || latest < 2) throw new Error(RPC + "/status returned no usable latest_block_height");
+    return Promise.all([
+      statusRow,
+      get(RPC + "/commit?height=" + (latest - 1)),
+      get(RPC + "/block?height=" + latest),
+      get(API + "/cosmos/bank/v1beta1/supply/by_denom?denom=pcsm"),
+      get(API + "/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED"),
+      get(API + "/cosmos/gov/v1/proposals?pagination.limit=20")
+    ]);
+  }).then(function (rows) {
     var status = rows[0].result || {};
     var info = status.node_info || {};
     var sync = status.sync_info || {};
+    var commitHeight = String(Number(sync.latest_block_height) - 1);
     var commit = (((rows[1].result || {}).signed_header || {}).commit || {});
+    if (String(commit.height) !== commitHeight) throw new Error(RPC + "/commit returned height " + commit.height + " for requested height " + commitHeight);
     var sigs = commit.signatures || [];
     var signed = sigs.filter(function (s) { return s.signature && s.block_id_flag === 2; }).length;
     var block = rows[2].result || {};
@@ -369,7 +375,7 @@ flexibility(document.documentElement);
     html += "<li>Block time " + esc(sync.latest_block_time || "") + "</li>";
     html += "<li>catching_up " + esc(String(sync.catching_up)) + "</li>";
     html += "<li>Latest block hash " + esc((block.block_id || {}).hash || "") + "</li>";
-    html += "<li>Commit signatures " + signed + " of " + sigs.length + "</li>";
+    html += "<li>Commit signatures at height " + esc(commitHeight) + ": " + signed + " of " + sigs.length + "</li>";
     html += "<li>pcsm supply raw " + esc(supply) + "</li>";
     html += "</ul>";
     html += "<h3>Bonded validators</h3><table><thead><tr><th>Moniker</th><th>Operator</th><th>Tokens</th><th>Share</th></tr></thead><tbody>";
